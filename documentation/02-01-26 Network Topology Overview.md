@@ -1,4 +1,5 @@
 02-01-26 Network Topology Overview
+
 ![Network Topology Diagram](../diagrams/Secure-Network-Infrastructure-Project-Diagram-01.png)
 - I made this quick diagram using Draw.io, it was a way for me to visualize the network I am about to create. The best way to understand this I believe is to explain what's going on. Expanding on these principles and new ones will come later, this is just my first step.
 
