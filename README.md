@@ -6,7 +6,7 @@ To build and defend a virtualized enterprise network that follows the **Principl
 
 ## Technical Architecture
 
-![Network Topology Diagram](../diagrams/Secure-Network-Infrastructure-Project-Diagram-01.png)
+![Network Topology Diagram](/diagrams/Secure-Network-Infrastructure-Project-Diagram-01.png)
 
 ## Security Hardening Implemented
 - [ ] pfSense Gateway Configuration
