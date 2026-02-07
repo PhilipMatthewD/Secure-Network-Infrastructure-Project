@@ -5,7 +5,8 @@
 To build and defend a virtualized enterprise network that follows the **Principle of Least Privilege**. This lab demonstrates my ability to configure firewalls, segment networks, and analyze traffic logs.
 
 ## Technical Architecture
-*(Diagram Coming Tomorrow)*
+
+![Network Topology Diagram](../diagrams/Secure-Network-Infrastructure-Project-Diagram-01.png)
 
 ## Security Hardening Implemented
 - [ ] pfSense Gateway Configuration
