@@ -1,0 +1,123 @@
+**03-03-26 — Setting Up the Monitors**
+
+**Phase Overview**
+* Now that Ubuntu, Apache, pfSense, and Hyper-V are all set up and working, I began the second phase of development: setting up the Windows Attacker Client and the SIEM.
+
+**SIEM Virtual Machine Setup**
+* First, I segmented the SIEM from the Ubuntu VM. Doing this ensures that if Ubuntu goes down, the SIEM will not go down as well.
+* The new VM is called **Ubuntu-Splunk-SIEM**.
+* Configuration:
+  * 4 GB memory
+  * 60 GB storage (dedicated for logs)
+* One thing I did differently this time was **disable Dynamic Memory** and assign the storage statically.
+* After installing Ubuntu the same way as the previous VM, I created a different login specifically for the SIEM environment:
+  * Username: `siemlogin`
+
+**Network Configuration**
+* Since I had previously messed up an installation, I verified connectivity first.
+* I obtained the IP address of the Ubuntu Splunk server and **pinged it from pfSense** to confirm the network connection.
+* I then changed the VM’s IP address to **10.0.0.20** using **pfSense DHCP Static Mapping** based on the VM’s MAC address.
+* Before doing this, I adjusted the DHCP range to:
+  * **10.0.0.10 – 10.0.0.19**
+* The IP address change was successful.
+
+**System Preparation**
+
+* After verifying Ubuntu was fully updated, I installed required utilities:
+  * `wget`
+  * `curl`
+  * `gnupg`
+
+**Installing Splunk**
+
+* Installing Splunk ended up being simpler than I originally expected.
+* Instead of downloading manually, I used a shortened `wget` command.
+Original command example:
+wget -O splunk-10.2.1-c892b66d163d-linux-amd64.deb "https://download.splunk.com/products/splunk/releases/10.2.1/linux/splunk-10.2.1-c892b66d163d-linux-amd64.deb"
+
+Simplified command used:
+wget -O splunk.deb "https://download.splunk.com/products/splunk/releases/10.2.1/linux/splunk-10.2.1-c892b66d163d-linux-amd64.deb"
+
+Installation steps:
+sudo dpkg -i splunk.deb
+
+Start Splunk:
+sudo /opt/splunk/bin/splunk start --accept-license --answer-yes --no-prompt --run-as-root
+
+Enable auto-start:
+sudo /opt/splunk/bin/splunk enable boot-start --accept-license
+
+Verify status:
+sudo /opt/splunk/bin/splunk status
+
+Access Splunk web interface:
+http://10.0.0.20:8000
+
+**Creating a Dedicated Splunk User**
+To properly run Splunk under its own user account:
+Create the user:
+sudo useradd -m splunk
+
+Assign ownership:
+sudo chown -R splunk:splunk /opt/splunk
+
+Switch to the Splunk user:
+sudo su - splunk
+
+Start Splunk again under this account:
+/opt/splunk/bin/splunk start --accept-license
+
+This time a prompt appeared, allowing me to create the **Splunk admin account**.
+After that I was able to log into the Splunk platform normally.
+
+**Configuring Splunk Log Receiving**
+Inside the Splunk interface:
+* Navigated to **Settings**
+* Created a **new receiving port: 9997**
+
+Verify Splunk is listening:
+sudo ss -tulnp | grep 9997
+This confirmed Splunk is ready to receive logs.
+
+**Installing the Splunk Universal Forwarder**
+Download the forwarder:
+wget -O splunkforwarder.deb "https://download.splunk.com/products/universalforwarder/releases/10.2.1/linux/splunkforwarder-10.2.1-c892b66d163d-linux-amd64.deb"
+
+I created another login:
+* `forwarderlogin`
+When starting the forwarder, I encountered an issue with the `splunkd` instance and had to terminate it before continuing.
+
+Start the forwarder:
+sudo /opt/splunkforwarder/bin/splunk start --accept-license
+
+Configure the forwarder to send logs to the SIEM:
+sudo /opt/splunkforwarder/bin/splunk add forward-server 10.0.0.20:9997
+I initially forgot to restart Splunk, so I restarted it and continued configuring monitoring inputs.
+
+**Log Monitoring Configuration**
+System log monitoring:
+sudo /opt/splunkforwarder/bin/splunk add monitor /var/log/syslog
+
+Authentication log monitoring:
+sudo /opt/splunkforwarder/bin/splunk add monitor /var/log/auth.log
+
+After restarting both services, the forwarder successfully connected.
+Verification showed:
+* **1 active forwarder**
+* **Port 9997 operational**
+* Logs successfully reaching Splunk
+
+(Screenshots were captured for documentation.)
+
+**RAM Constraint Issue**
+Due to my system having only **16 GB of RAM**, I had to reconsider my VM allocation.
+Originally planned:
+* Separate Windows attacker VM
+
+Adjustment made:
+* SIEM kept the same
+* Ubuntu internal server reduced to **1 GB RAM**
+* pfSense firewall VM reduced to **1 GB RAM**
+* Temporarly used **Command Prompt** over a whole Windows VM
+
+This frees enough resources to continue expanding the lab later.
